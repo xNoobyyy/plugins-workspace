@@ -113,7 +113,15 @@ async fn connect<R: Runtime>(
         }
     }
 
-    let (ws_stream, _) = connect_async_with_config(request, config.map(Into::into), false).await?;
+    let tls_connector = TlsConnector::builder()
+        .danger_accept_invalid_certs(true)
+        .danger_accept_invalid_hostnames(true)
+        .build()
+        .unwrap();
+
+    let connector = Connector::NativeTls(tls_connector);
+
+    let (ws_stream, _) = connect_async_tls_with_config(request, config.map(Into::into), false, Some(connector)).await?;
 
     tauri::async_runtime::spawn(async move {
         let (write, read) = ws_stream.split();
